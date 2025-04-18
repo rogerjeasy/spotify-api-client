@@ -1,0 +1,7 @@
+.env
+*.env
+
+/spotify_api_env
+*/spotify_api_env
+.spotify_api_env
+spotify_api_env
