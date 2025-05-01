@@ -5,3 +5,8 @@
 */spotify_api_env
 .spotify_api_env
 spotify_api_env
+
+## log files
+*.log
+*.log.*
+*/*.log
