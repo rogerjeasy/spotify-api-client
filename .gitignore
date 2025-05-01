@@ -10,3 +10,13 @@ spotify_api_env
 *.log
 *.log.*
 */*.log
+
+## __pycache__ files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyd.*
+__pycache__
+*/__pycache__
+*/__pycache__/*
