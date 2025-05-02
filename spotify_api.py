@@ -9,6 +9,7 @@ import logging
 from datetime import datetime
 from requests.exceptions import RequestException
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 # Set up logging
 logging.basicConfig(
@@ -373,51 +374,51 @@ class SpotifyDataFetcher:
     
     def fetch_artists_from_csv(self, input_csv_path, artist_id_column='artist_uri 3'):
         """Fetch data for artists from CSV file"""
-        
-        # Read artist IDs from CSV
-        artist_ids = []
+
+        total_count = 0
+        remaining_artists = []
         try:
             with open(input_csv_path, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     artist_uri = row.get(artist_id_column, '')
-                    # Extract artist ID from Spotify URI
                     if artist_uri.startswith('spotify:artist:'):
                         artist_id = artist_uri.split(':')[-1]
-                        artist_ids.append(artist_id)
                     else:
-                        # If it's just an ID, use it directly
-                        artist_ids.append(artist_uri)
-                        
+                        artist_id = artist_uri
+
+                    total_count += 1
+                    if artist_id in self.fetched_artists:
+                        continue
+
+                    remaining_artists.append(artist_id)
         except Exception as e:
             logging.error(f"Error reading CSV file: {e}")
             return
-        
-        # Filter out already fetched artists
-        remaining_artists = [aid for aid in artist_ids if aid not in self.fetched_artists]
-        logging.info(f"Found {len(artist_ids)} artists, {len(remaining_artists)} remaining to fetch")
-        
+
+        logging.info(f"Found {total_count} entries, {len(remaining_artists)} unique values appended for API call")
+
         # Fetch data for each artist
-        for i, artist_id in enumerate(remaining_artists):
+        for i, artist_id in enumerate(tqdm(remaining_artists, desc="Fetching artists", unit="artist")):
             try:
                 logging.info(f"Fetching data for artist {i+1}/{len(remaining_artists)} (ID: {artist_id})")
                 data = self.get_artist_data(artist_id)
-                
+
                 if data:
                     self.save_artist_data(artist_id, data)
                     logging.info(f"Successfully saved data for artist {artist_id}")
                 else:
                     logging.warning(f"No data returned for artist {artist_id}")
-                    
+
                 # Progress checkpoint every 10 artists
                 if (i + 1) % 10 == 0:
                     logging.info(f"Progress: {i+1}/{len(remaining_artists)} artists completed")
-                    
+
             except Exception as e:
                 logging.error(f"Error processing artist {artist_id}: {e}")
                 # Continue with next artist
                 continue
-        
+
         logging.info("Finished fetching all artist data")
 
 # Usage example
